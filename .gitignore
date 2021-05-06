@@ -1,1 +1,4 @@
 .idea
+datasets
+*.pyc
+checkpoints

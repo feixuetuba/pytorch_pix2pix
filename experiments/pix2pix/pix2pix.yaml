@@ -1,0 +1,48 @@
+name: pix2pix
+stage: train
+input_nc: 3
+output_nc: 3
+direction: "AtoB"
+epochs: 205
+n_epochs_decay: 100
+
+solver:
+  name: BasicSolver
+  save_epoch: 5
+
+model:
+  name: Pix2PixModel
+  gan_mode: 'vanilla'
+  gpu_ids: "0"
+  learning_rate: 0.0002
+  lambda_L1: 100
+  beta1: 0.5
+  lr_policy: 'linear'
+
+nn:
+  name: p2p
+  nf: 64
+  norm: 'instance'
+  init_type: 'normal'
+  init_gain: 0.02
+  gpu_ids: 0
+  G:
+    use_dropout: False
+    net: 'resnet_9blocks'
+  D:
+    net: 'basic'
+    n_layers: 3
+
+dataset:
+  name: 'AlignedDataset'
+  dataroot: "datasets/maps"
+  crop_size: 256
+  train:
+    max_dataset_size: 50
+    load_size: 286
+    preprocess: "resize_and_crop"
+    batch_size: 1
+    drop_last: True
+    n_workers: 4
+    flip: True
+    shuffle: True

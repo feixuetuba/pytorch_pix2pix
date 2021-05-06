@@ -3,9 +3,10 @@ It also includes common transformation functions (e.g., get_transform, __scale_w
 """
 import random
 import numpy as np
-import torch.utils.data as data
 from PIL import Image
 import torchvision.transforms as transforms
+from torchvision.transforms import InterpolationMode
+
 
 def get_params(cfg, size):
     w, h = size
@@ -26,7 +27,7 @@ def get_params(cfg, size):
     return {'crop_pos': (x, y), 'flip': flip}
 
 
-def get_transform(cfg, params=None, grayscale=False, method=Image.BICUBIC, convert=True):
+def get_transform(cfg, params=None, grayscale=False, method=InterpolationMode.BICUBIC, convert=True):
     transform_list = []
     if grayscale:
         transform_list.append(transforms.Grayscale(1))
@@ -41,7 +42,7 @@ def get_transform(cfg, params=None, grayscale=False, method=Image.BICUBIC, conve
         if params is None:
             transform_list.append(transforms.RandomCrop(cfg['crop_size']))
         else:
-            transform_list.append(transforms.Lambda(lambda img: __crop(img, params['crop_pos'], opt.crop_size)))
+            transform_list.append(transforms.Lambda(lambda img: __crop(img, params['crop_pos'], cfg['crop_size'])))
 
     if preprocess == 'none':
         transform_list.append(transforms.Lambda(lambda img: __make_power_2(img, base=4, method=method)))
