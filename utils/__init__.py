@@ -26,10 +26,12 @@ def tensor2img(tensor, n):
 
 def show_remain(t):
     value = []
-    for div in [60, 60, 24]:
-        value.append(t % div)
-        t //= div
+    t = int(t)
+    for div in [86400, 3600, 60]:
+        value.append(t // div)
+        t %= div
+    value.append(t)
     desc = []
-    for d, v in zip(['Day', 'Min', 'Sec'], value[::-1]):
+    for d, v in zip(['D', 'H', 'M', 'S'], value):
         desc.append(f"{v}{d}")
     return ",".join(desc)

@@ -11,10 +11,10 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument("cfg", help="configuration file")
     parser.add_argument("--stage", default="test")
-    parser.add_argument("--which_epoch", default=0)
+    parser.add_argument("--which_epoch", type=int, default=0)
     parser.add_argument("--checkpoints", default=None, help="checkpoints dir")
     parser.add_argument("--imgs", default=None, help="img dir for test")
-    parser.add_argument("--dest", default=None, help="dest dir to save results")
+    parser.add_argument("--dest", default="test_results", help="dest dir to save results")
     opts = parser.parse_args()
 
     with open(opts.cfg, "r") as fd:
@@ -25,9 +25,13 @@ if __name__ == '__main__':
         config['checkpoint_dir'] = os.path.join("checkpoints", config['name'])
     else:
         config['checkpoint_dir'] = opts.checkpoints
+
     if opts.stage == "test":
-        config['test']['dataroot'] = opts.imgs
-        config['test']['dest'] = opts.dest
+        ds_cfg =config['dataset']
+        if 'test' not in ds_cfg:
+            ds_cfg['test'] = {}
+        ds_cfg['test']['dataroot'] = opts.imgs
+        ds_cfg['test']['dest'] = opts.dest
     else:
         os.makedirs(config['checkpoint_dir'], exist_ok=True)
     solver = get_cls('solvers', config['solver']['name'])(config)

@@ -1,3 +1,4 @@
+import logging
 import os
 
 import numpy as np
@@ -78,8 +79,9 @@ class Pix2PixModel():
         """
         AtoB = self.cfg['direction'] == 'AtoB'
         self.real_A = input['A' if AtoB else 'B'].to(self.device)
-        self.real_B = input['B' if AtoB else 'A'].to(self.device)
-        self.image_paths = input['A_paths' if AtoB else 'B_paths']
+        if 'B' in input:
+            self.real_B = input['B' if AtoB else 'A'].to(self.device)
+            self.image_paths = input['A_paths' if AtoB else 'B_paths']
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
@@ -133,13 +135,27 @@ class Pix2PixModel():
         self.optimizer_G.step()             # udpate G's weights
 
     def save(self, save_dir, name, iter):
-        print(os.path.join(save_dir, f"{name}_G_{iter}.pth"))
-        torch.save(self.netG, os.path.join(save_dir, f"{name}_G_{iter}.pth"))
-        torch.save(self.netD, os.path.join(save_dir, f"{name}_D_{iter}.pth"))
+        for model, net_name in zip([self.netG, self.netD], ['G', 'D']):
+            if hasattr(model, 'module'):
+                model = model.module
+            ckpt_path = os.path.join(save_dir, f"{iter}_{name}_{net_name}.pth")
+            logging.info(f"Save ckpt:{ckpt_path}")
+            torch.save(model.state_dict(), ckpt_path)
 
     def load(self, save_dir, name, iter):
-        self.netG.load_state_dict(torch.load(os.path.join(save_dir, f"{name}_G_{iter}.pth")))
-        self.netD.load_state_dict(torch.load(os.path.join(save_dir, f"{name}_D_{iter}.pth")))
+        models = [self.netG]
+        names = ['G']
+        if self.isTrain:
+            models.append(self.netD)
+            names.append("D")
+        for model, net_name in zip(models, names):
+            logging.info(f"Load Net:{net_name}")
+            ckpt_path = os.path.join(save_dir ,f"{iter}_{name}_{net_name}.pth")
+            x = torch.load(ckpt_path)
+            if hasattr(x, 'module'):
+                x = x.module
+                x = x.state_dict()
+            model.load_state_dict(x)
 
     def get_current_visual(self, n):
         real_A = tensor2img(self.real_A, n)

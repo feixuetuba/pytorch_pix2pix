@@ -20,7 +20,7 @@ class BasicSolver:
         dataloader = get_dataloader(self.cfg, self.cfg['stage'])
         which_epoch = self.cfg.get('which_epoch', 0)
         if which_epoch != 0:
-            model.load(self.cfg['checkpoints_dir'], self.cfg['nn']['name'], which_epoch)
+            model.load(self.cfg['checkpoint_dir'], self.cfg['nn']['name'], which_epoch)
 
         log_dir = os.path.join(self.cfg['checkpoint_dir'], 'log')
         if os.path.isdir(log_dir):
@@ -33,8 +33,7 @@ class BasicSolver:
         step = 0
         logging.info("===== Training... =====")
 
-        for epoch in range(epoch_remain):
-            epoch += 1
+        for epoch in range(which_epoch+1, self.cfg['epochs']+1):
             start = time.time()
             for data in dataloader:
                 model.set_input(data)
@@ -56,8 +55,7 @@ class BasicSolver:
         import cv2
         model = get_cls("models", self.cfg['model']['name'])(self.cfg)
         which_epoch = self.cfg.get('which_epoch', 0)
-        model.load(self.cfg['checkpoints_dir'], self.cfg['nn']['name'], which_epoch)
-        model.eval()
+        model.load(self.cfg['checkpoint_dir'], self.cfg['nn']['name'], which_epoch)
         logging.info("===== Testing... =====")
         img_root = self.cfg['dataset']['test']['dataroot']
         load_size = self.cfg['dataset']['crop_size']
@@ -71,13 +69,14 @@ class BasicSolver:
             img = cv2.resize(img, (load_size,load_size), cv2.INTER_CUBIC)
             img = np.transpose(img, (2,0,1)).astype(np.float32)
             img = img[None, ...] / 127.5 - 1
-            model.set_input(torch.from_numpy(img))
+            model.set_input({'A':torch.from_numpy(img)})
             with torch.no_grad():
                 model.forward()
                 result = model.fake_B.cpu().numpy()[0]
                 result = np.transpose(result,(1,2,0))
                 result = (result + 1) * 127.5
                 result = np.clip(result, 0, 255).astype(np.uint8)
+                result = cv2.resize(result, (w, h))
                 if dest_dir is not None:
                     dest_f = os.path.join(dest_dir, f)
                     cv2.imwrite(dest_f, result)

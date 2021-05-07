@@ -38,7 +38,7 @@ dataset:
   dataroot: "datasets/maps"
   crop_size: 256
   train:
-    max_dataset_size: 50
+    max_dataset_size: 500000
     load_size: 286
     preprocess: "resize_and_crop"
     batch_size: 1
