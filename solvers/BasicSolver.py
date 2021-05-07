@@ -18,9 +18,7 @@ class BasicSolver:
     def train(self):
         model = get_cls("models", self.cfg['model']['name'])(self.cfg)
         dataloader = get_dataloader(self.cfg, self.cfg['stage'])
-        which_epoch = self.cfg.get('which_epoch', 0)
-        if which_epoch != 0:
-            model.load(self.cfg['checkpoint_dir'], self.cfg['nn']['name'], which_epoch)
+
 
         log_dir = os.path.join(self.cfg['checkpoint_dir'], 'log')
         if os.path.isdir(log_dir):
@@ -29,11 +27,14 @@ class BasicSolver:
 
         writer = SummaryWriter(log_dir=log_dir)
 
-        epoch_remain = self.cfg['epochs'] - which_epoch
+        which_epoch = self.cfg.get('which_epoch', 0)
+        if which_epoch != 0:
+            model.load(self.cfg['checkpoint_dir'], self.cfg['nn']['name'], which_epoch)
         step = 0
         logging.info("===== Training... =====")
 
-        for epoch in range(which_epoch+1, self.cfg['epochs']+1):
+        epochs = self.cfg['epochs'] + 1
+        for epoch in range(which_epoch+1, epochs):
             start = time.time()
             for data in dataloader:
                 model.set_input(data)
@@ -41,7 +42,7 @@ class BasicSolver:
                 writer.add_scalars('Loss', model.get_current_error(), step)
                 step += 1
             elapse = time.time() - start
-            remain = (epoch_remain - epoch) * elapse
+            remain = (epochs - epoch) * elapse
             writer.add_image(self.cfg['name'],model.get_current_visual(3), epoch, dataformats='HWC')
             old_lr, lr = model.update_learning_rate()
             logging.info(f"[{epoch}], {old_lr} -> {old_lr}, elapse:{elapse}, remain:{show_remain(remain)}")
@@ -66,10 +67,11 @@ class BasicSolver:
         for f in tqdm(files, total=len(files)):
             img = cv2.imread(os.path.join(img_root, f))
             h, w = img.shape[:2]
-            img = cv2.resize(img, (load_size,load_size), cv2.INTER_CUBIC)
-            img = np.transpose(img, (2,0,1)).astype(np.float32)
-            img = img[None, ...] / 127.5 - 1
-            model.set_input({'A':torch.from_numpy(img)})
+            net_input = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            net_input = cv2.resize(net_input, (load_size,load_size), cv2.INTER_CUBIC)
+            net_input = np.transpose(net_input, (2,0,1)).astype(np.float32)
+            net_input = net_input[None, ...] / 127.5 - 1
+            model.set_input({'A':torch.from_numpy(net_input)})
             with torch.no_grad():
                 model.forward()
                 result = model.fake_B.cpu().numpy()[0]
@@ -77,6 +79,8 @@ class BasicSolver:
                 result = (result + 1) * 127.5
                 result = np.clip(result, 0, 255).astype(np.uint8)
                 result = cv2.resize(result, (w, h))
+                result = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
+                result = np.hstack([img, result])
                 if dest_dir is not None:
                     dest_f = os.path.join(dest_dir, f)
                     cv2.imwrite(dest_f, result)

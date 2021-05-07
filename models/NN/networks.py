@@ -47,7 +47,7 @@ def get_scheduler(optimizer, cfg):
     lr_policy = cfg['lr_policy']
     if lr_policy == 'linear':
         def lambda_rule(epoch):
-            lr_l = 1.0 - max(0, epoch + cfg['n_epochs_decay'] - cfg['epochs']) / float(cfg['n_epochs_decay'] + 1)
+            lr_l = 1.0 - max(0, epoch - cfg['n_epochs_decay'] + cfg['which_epoch']) / (float(cfg['epochs'] - cfg['n_epochs_decay'] + 1))   #fixme latter!
             return lr_l
         scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda_rule)
     elif lr_policy == 'step':

@@ -60,13 +60,13 @@ class Pix2PixModel():
                 D_cfg['init_gain'],
                 gpu_ids)
 
+            self.lr = m_cfg['learning_rate']
             self.criterionGAN = networks.GANLoss(m_cfg['gan_mode']).to(self.device)
             self.criterionL1 = torch.nn.L1Loss()
-            lr = m_cfg['learning_rate']
             beta1 = m_cfg['beta1']
             # initialize optimizers; schedulers will be automatically created by function <BaseModel.setup>.
-            self.optimizer_G = torch.optim.Adam(self.netG.parameters(), lr=lr, betas=(beta1, 0.999))
-            self.optimizer_D = torch.optim.Adam(self.netD.parameters(), lr=lr, betas=(beta1, 0.999))
+            self.optimizer_G = torch.optim.Adam(self.netG.parameters(), lr=self.lr, betas=(beta1, 0.999))
+            self.optimizer_D = torch.optim.Adam(self.netD.parameters(), lr=self.lr, betas=(beta1, 0.999))
             self.optimizers = [self.optimizer_G, self.optimizer_D]
             self.schedulers = [networks.get_scheduler(optimizer, m_cfg) for optimizer in self.optimizers]
         else:
