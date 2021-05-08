@@ -149,7 +149,7 @@ class Pix2PixModel():
             models.append(self.netD)
             names.append("D")
         for model, net_name in zip(models, names):
-            logging.info(f"Load Net:{net_name}")
+            logging.info(f"Load Net:{net_name} epoch:{iter}")
             ckpt_path = os.path.join(save_dir ,f"{iter}_{name}_{net_name}.pth")
             x = torch.load(ckpt_path)
             if hasattr(x, 'module'):

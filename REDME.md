@@ -9,3 +9,21 @@ pytorch复现《Image-to-Image Translation with Conditional Adversarial Networks
 ```python
 python datasetPrepare\donwloadDataset.py --name maps
 ```
+从0开始训练：
+```python
+python main.py experiments/pix2pix/pix2pix.yaml --stage train
+```
+从断点训练（比如100）
+```python
+python main.py experiments/pix2pix/pix2pix.yaml --stage train --which_epoch 100
+```
+测试：
+```python
+python main.py experiments/pix2pix/pix2pix.yaml --stage train --which_epoch 205 --imgs examples/maps/inputs
+```
+实验效果：  
+![](test_results/1.jpg)
+![](test_results/2.jpg)
+![](test_results/3.jpg)
+![](test_results/4.jpg)
+![](test_results/5.jpg)
